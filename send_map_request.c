@@ -13,6 +13,9 @@
  *	IPv6 support added by Lorand Jakab <lj@icanhas.net>
  *	Mon Aug 23 15:26:51 2010 +0200
  *
+ *	Instance ID support added by Lorand Jakab <lj@icanhas.net>
+ *	Thu Jul 26 00:50:51 PDT 2012
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     o Redistributions of source code must retain the above copyright
@@ -76,12 +79,13 @@
  *
  */
 
-int send_map_request(s,nonce0,nonce1,before,eid_addr,map_resolver_addr,my_addr)
+int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_addr)
      int		s;
      unsigned int	nonce0;
      unsigned int	nonce1;
      struct timeval     *before;
      struct sockaddr	*eid_addr;
+     int32_t	        iid;
      struct sockaddr	*map_resolver_addr;
      struct sockaddr	*my_addr; 
 {
@@ -89,6 +93,7 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,map_resolver_addr,my_addr)
     unsigned int		ip_len		   = 0;
     unsigned int		udp_len		   = 0;
     unsigned int		packet_len	   = 0;
+    unsigned int		extra_len	   = 0;
     int				nbytes		   = 0;
     int				e		   = 0;
     char buf1[NI_MAXHOST];
@@ -101,6 +106,8 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,map_resolver_addr,my_addr)
     struct udphdr		*udph;
     struct map_request_pkt	*map_request;
     struct map_request_eid	*map_request_eid;
+    struct lcaf                 *map_request_lcaf     = NULL;
+    struct lcaf_iid             *map_request_lcaf_iid = NULL;
 
     /*
      * The source address in the inner IP header
@@ -196,12 +203,20 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,map_resolver_addr,my_addr)
         map_request_eid  = (struct map_request_eid *)  CO(map_request, sizeof(struct map_request_pkt) + sizeof(struct in_addr));
     else
         map_request_eid  = (struct map_request_eid *)  CO(map_request, sizeof(struct map_request_pkt) + sizeof(struct in6_addr));
+
+    if (iid >= 0) {
+        map_request_lcaf     = (struct lcaf *)     CO(map_request_eid, sizeof(struct map_request_eid));
+        map_request_lcaf_iid = (struct lcaf_iid *) CO(map_request_lcaf, sizeof(struct lcaf));
+        extra_len            = sizeof(struct lcaf) + sizeof(struct lcaf_iid);
+    }
+
     /*
      *  compute lengths of interest
      */
 
     udp_len	= sizeof(struct udphdr) + sizeof(struct map_request_pkt)
-                                        + sizeof(struct map_request_eid);
+                                        + sizeof(struct map_request_eid)
+                                        + extra_len;
 
     if (my_addr->sa_family == AF_INET)
         udp_len = udp_len               + sizeof(struct in_addr);
@@ -330,15 +345,45 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,map_resolver_addr,my_addr)
 
     if (eid_addr->sa_family == AF_INET) {
         map_request_eid->eid_mask_len	     = LISP_IP_MASK_LEN;
-        map_request_eid->eid_prefix_afi      = htons(LISP_AFI_IP);
-        memcpy(&map_request_eid->eid_prefix,
-                &(((struct sockaddr_in *)eid_addr)->sin_addr), sizeof(struct in_addr));
+        if (iid >= 0) {
+            map_request_eid->eid_prefix_afi  = htons(LISP_AFI_LCAF);
+            map_request_lcaf->rsvd1   = 0;
+            map_request_lcaf->flags   = 0;
+            map_request_lcaf->type    = 2;
+            map_request_lcaf->rsvd2   = 0;    /* This can be IID mask-len, not yet supported */
+            map_request_lcaf->len     = htons(sizeof(struct lcaf_iid) + sizeof(struct in_addr));
+
+            map_request_lcaf_iid->iid = htonl(iid);
+            map_request_lcaf_iid->afi = htons(LISP_AFI_IP);
+
+            memcpy(&map_request_lcaf_iid->eid_prefix,
+                    &(((struct sockaddr_in *)eid_addr)->sin_addr), sizeof(struct in_addr));
+        } else {
+            map_request_eid->eid_prefix_afi      = htons(LISP_AFI_IP);
+            memcpy(&map_request_eid->eid_prefix,
+                    &(((struct sockaddr_in *)eid_addr)->sin_addr), sizeof(struct in_addr));
+        }
         iph->ip_sum			     = ip_checksum(packet,ip_len);
     } else {
         map_request_eid->eid_mask_len	     = LISP_IPV6_MASK_LEN;
-        map_request_eid->eid_prefix_afi      = htons(LISP_AFI_IPV6);
-        memcpy(&map_request_eid->eid_prefix,
-                &(((struct sockaddr_in6 *)eid_addr)->sin6_addr), sizeof(struct in6_addr));
+        if (iid >= 0) {
+            map_request_eid->eid_prefix_afi  = htons(LISP_AFI_LCAF);
+            map_request_lcaf->rsvd1   = 0;
+            map_request_lcaf->flags   = 0;
+            map_request_lcaf->type    = 2;
+            map_request_lcaf->rsvd2   = 0;    /* This can be IID mask-len, not yet supported */
+            map_request_lcaf->len     = htons(sizeof(struct lcaf_iid) + sizeof(struct in6_addr));
+
+            map_request_lcaf_iid->iid = htonl(iid);
+            map_request_lcaf_iid->afi = htons(LISP_AFI_IPV6);
+
+            memcpy(&map_request_lcaf_iid->eid_prefix,
+                    &(((struct sockaddr_in6 *)eid_addr)->sin6_addr), sizeof(struct in6_addr));
+        } else {
+            map_request_eid->eid_prefix_afi      = htons(LISP_AFI_IPV6);
+            memcpy(&map_request_eid->eid_prefix,
+                    &(((struct sockaddr_in6 *)eid_addr)->sin6_addr), sizeof(struct in6_addr));
+        }
     }
 
     if (udp_checksum_disabled)

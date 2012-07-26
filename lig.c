@@ -16,7 +16,11 @@
  *      Machine parsable output added by Job Snijders <job@instituut.net>
  *      Wed Dec 15 11:38:42 CET 2010
  *  
- *Redistribution and use in source and binary forms, with or without
+ *	Instance ID support added by Lorand Jakab <lj@icanhas.net>
+ *	Thu Jul 26 00:50:51 PDT 2012
+ *
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     o Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
@@ -73,6 +77,7 @@ unsigned int udp_checksum_disabled	= 0;
 unsigned int disallow_eid		= 0;
 unsigned int debug			= 0;
 unsigned int machinereadable		= 0;
+int32_t      iid			= -1;
 
 
 int main(int argc, char *argv[])
@@ -131,7 +136,7 @@ int main(int argc, char *argv[])
      */  
 
     int  opt		= 0;
-    char *optstring	= "bc:dem:p:t:s:uv";
+    char *optstring	= "bc:dei:m:p:t:s:uv";
 
     while ((opt = getopt (argc, argv, optstring)) != -1) {
 	switch (opt) {
@@ -152,6 +157,16 @@ int main(int argc, char *argv[])
 	    break;
 	case 'e':
 	    disallow_eid = 1;
+	    break;
+	case 'i':
+	    iid = atoi(optarg);
+	    if ((iid < 0) || (iid > MAX_IID)) {
+		fprintf(stderr,
+			"%s: Invalid Instance ID, specify count in the range (%u:%u)\n",
+			argv[0], 0, MAX_IID);
+		exit(BAD);
+	    }
+	    printf("Using Instance ID %d\n", iid);
 	    break;
 	case 'p':
 	    if ((port = atoi(optarg)) > MAX_EPHEMERAL_PORT) {
@@ -413,6 +428,7 @@ int main(int argc, char *argv[])
 			     nonce1,
 			     &before,
 			     (struct sockaddr *)&eid_addr,
+			     iid,
 			     (struct sockaddr *)&map_resolver_addr,
 			     (struct sockaddr *)&my_addr)) {
 	    fprintf(stderr, "send_map_request: can't send map-request\n");

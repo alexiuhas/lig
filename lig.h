@@ -16,6 +16,9 @@
  *      Machine parsable output added by Job Snijders <job@instituut.net>
  *      Wed Dec 15 11:38:42 CET 2010
  * 
+ *	Instance ID support added by Lorand Jakab <lj@icanhas.net>
+ *	Thu Jul 26 00:50:51 PDT 2012
+ *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -88,6 +91,7 @@ typedef enum			{FALSE,TRUE} boolean;
 #define	V6EID_PREFIX_LEN        9	/* characters in "2610:00d0" */
 #define	MIN_EPHEMERAL_PORT	32768
 #define	MAX_EPHEMERAL_PORT	65535
+#define MAX_IID                 16777215
 
 #define	USAGE	"usage: %s [-b] [-c <count>] [-d] [-e] [-m <map resolver>] [-p <port>] \
 [-s <source address>] [-t <timeout>] [-u] [-v] <EID>\n"
@@ -164,6 +168,7 @@ typedef enum			{FALSE,TRUE} boolean;
 
 #define LISP_AFI_IP		1
 #define LISP_AFI_IPV6		2
+#define LISP_AFI_LCAF		16387
 #define	LISP_IP_MASK_LEN	32
 #define	LISP_IPV6_MASK_LEN	128
 
@@ -276,7 +281,19 @@ struct map_request_eid {
         uchar           eid_prefix[0];
 } __attribute__ ((__packed__));
 
+struct lcaf {
+        uint8_t         rsvd1;
+        uint8_t         flags;
+        uint8_t         type;
+        uint8_t         rsvd2;
+        uint16_t        len;
+} __attribute__ ((__packed__));
 
+struct lcaf_iid {
+        uint32_t        iid;
+        uint16_t        afi;
+        uchar           eid_prefix[0];
+} __attribute__ ((__packed__));
 
 
 /* 

@@ -24,6 +24,9 @@
  *	Machine parsable output added by Job Snijders <job@instituut.net>
  *	Wed Dec 15 11:38:42 CET 2010
  *
+ *	Instance ID support added by Lorand Jakab <lj@icanhas.net>
+ *	Thu Jul 26 00:50:51 PDT 2012
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     o Redistributions of source code must retain the above copyright
@@ -151,7 +154,7 @@ void print_negative_cache_entry(action)
  *
  */
 
-void set_afi_and_addr_offset(loc_afi,afi,addr_offset)
+int set_afi_and_addr_offset(loc_afi,afi,addr_offset)
      ushort		loc_afi;
      int		*afi;
      unsigned int	*addr_offset;
@@ -165,10 +168,13 @@ void set_afi_and_addr_offset(loc_afi,afi,addr_offset)
 	*afi = AF_INET6;
 	*addr_offset = sizeof(struct in6_addr);
 	break;
+    case LISP_AFI_LCAF:
+        return 1;
     default:
 	fprintf(stderr, "Unknown AFI (0x%x)\n", loc_afi);
 	break;
     }
+    return 0;
 }
 
 
@@ -188,6 +194,8 @@ void print_map_reply(map_reply,requested_eid,mr_to,mr_from,elapsed_time)
 {
     char			   pw[8];
     char			   buf[256];
+    struct lcaf                    *lcaf_ptr       = NULL;
+    struct lcaf_iid                *lcaf_iid_ptr   = NULL;
     struct lisp_map_reply_eidtype  *eidtype	   = NULL;
     struct lisp_map_reply_loctype  *loctype        = NULL; 
     const char			   *formatted_addr = NULL;
@@ -195,6 +203,7 @@ void print_map_reply(map_reply,requested_eid,mr_to,mr_from,elapsed_time)
     int				   record_count    = 0;
     int				   locator_count   = 0;
     int				   afi             = 0;
+    int				   iid             = 0;
     int				   record          = 0;    
     int				   locator         = 0;
 
@@ -216,12 +225,29 @@ void print_map_reply(map_reply,requested_eid,mr_to,mr_from,elapsed_time)
      */
 
     for (record = 0; record < record_count; record++) {
-        set_afi_and_addr_offset(ntohs(eidtype->eid_afi),
-                &afi,&addr_offset);
-	if ((formatted_addr = inet_ntop(afi, &eidtype->eid_prefix,
-                        buf, sizeof(buf))) == NULL) {
-            perror("inet_ntop");
-	    exit(BAD);
+        if (set_afi_and_addr_offset(ntohs(eidtype->eid_afi),
+                &afi,&addr_offset)) {
+            lcaf_ptr     = (struct lcaf *) &eidtype->eid_prefix;
+            if (lcaf_ptr->type != 2) {
+	        fprintf(stderr, "Unknown LCAF (0x%x)\n", lcaf_ptr->type);
+                exit(BAD);
+            }
+            lcaf_iid_ptr = (struct lcaf_iid *) CO(lcaf_ptr, sizeof(struct lcaf));
+            iid          = ntohl(lcaf_iid_ptr->iid);
+            set_afi_and_addr_offset(ntohs(lcaf_iid_ptr->afi),
+                    &afi,&addr_offset);
+            addr_offset += sizeof(struct lcaf) + sizeof(struct lcaf_iid);
+            if ((formatted_addr = inet_ntop(afi, &lcaf_iid_ptr->eid_prefix,
+                            buf, sizeof(buf))) == NULL) {
+                perror("inet_ntop");
+                exit(BAD);
+            }
+        } else {
+            if ((formatted_addr = inet_ntop(afi, &eidtype->eid_prefix,
+                            buf, sizeof(buf))) == NULL) {
+                perror("inet_ntop");
+                exit(BAD);
+            }
         }
         locator_count = eidtype->loc_count;
         if (machinereadable) {
@@ -233,7 +259,7 @@ void print_map_reply(map_reply,requested_eid,mr_to,mr_from,elapsed_time)
                eidtype->mobility_bit ? "1" : "0");
         }
         else {                                  
-	printf("%s/%d,",formatted_addr,eidtype->eid_mask_len);
+	printf("%s/%d, instance ID: %d, ",formatted_addr,eidtype->eid_mask_len,iid);
 	printf(" via map-reply, record ttl: %d, %s, %s\n", 
 	       ntohl(eidtype->record_ttl), 
 	       eidtype->auth_bit ? "auth" : "not auth", 
