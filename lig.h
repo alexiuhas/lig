@@ -50,6 +50,7 @@
 
 #include	<stdio.h>
 #include	<unistd.h>
+#include 	<getopt.h>
 #include	<stdlib.h>
 #include	<errno.h>
 #include	<ctype.h>
@@ -81,6 +82,7 @@ typedef enum			{FALSE,TRUE} boolean;
 #define	MIN_MR_TIMEOUT		1	/* seconds */
 #define	MAX_MR_TIMEOUT		5	/* seconds */
 #define	LISP_MAP_RESOLVER	"LISP_MAP_RESOLVER"
+#define LISP_MAP_SERVER		"LISP_MAP_SERVER"			//NEW
 #define	LOOPBACK		"127.0.0.1"
 #define	LOOPBACK6		"::1"
 #define	LINK_LOCAL		"fe80"
@@ -93,8 +95,8 @@ typedef enum			{FALSE,TRUE} boolean;
 #define	MAX_EPHEMERAL_PORT	65535
 #define MAX_IID                 16777215
 
-#define	USAGE	"usage: %s [-b] [-c <count>] [-d] [-e] [-m <map resolver>] [-p <port>] \
-[-s <source address>] [-t <timeout>] [-u] [-v] <EID>\n"
+#define	USAGE	"usage: %s [-b] [-c <count>] [-d] [-e] [-m <map resolver>] [-r] [-p <port>] \
+[-s <source address>] [-t <timeout>] [-u] [-v] <EID>\n"		//modified
 
 /*
  *	VERSION 

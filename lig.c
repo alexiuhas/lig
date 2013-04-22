@@ -50,6 +50,16 @@
 #include	"lig.h"
 #include	"lig-external.h"
 
+#include 	"testing/lispd_iface_list.h"
+#include 	"testing/lispd_external.h"
+#include 	"testing/lispd_lib.h"
+#include 	"testing/lispd_locator.h"
+#include 	"testing/lispd_map_register.h"
+#include 	"testing/lispd_pkt_lib.h"
+#include 	"testing/lispd_sockets.h"
+#include 	"testing/lispd_log.h"
+#include 	"testing/lispd_mapping.h"
+#include 	"testing/lispd_config.h"
 /*
  *	globals
  */
@@ -77,6 +87,7 @@ unsigned int udp_checksum_disabled	= 0;
 unsigned int disallow_eid		= 0;
 unsigned int debug			= 0;
 unsigned int machinereadable		= 0;
+unsigned int mreg			= 0;			//new
 int32_t      iid			= -1;
 
 
@@ -108,7 +119,28 @@ int main(int argc, char *argv[])
 
     struct sockaddr_storage eid_addr;
     struct sockaddr_storage map_resolver_addr;
-
+    
+    int				src_addrtype		= 0;
+    lispd_mapping_elt		*mapping		= NULL;
+    char 			*eidpref		= NULL;
+    lisp_addr_t			*eid_prefix		= 0;
+    uint8_t			eid_prefix_length	= 0;
+    char			*loc			= NULL;
+    lispd_locator_elt		*locator		= NULL;
+    lisp_addr_t			*locator_addr		= 0;
+    uint8_t			priority 		= 1;
+    uint8_t			weight 			= 100;
+    uint8_t			mpriority 		= 1;
+    uint8_t			mweight 		= 100;
+    char 			*map_server		= getenv(LISP_MAP_RESOLVER); 			//new
+    uint8_t			proxy			= 1;
+    uint8_t			defstate		= 1;
+    char			*key			= NULL;
+				key 			= strdup("1");
+    
+//    lispd_map_server_list_t   *ms			= 0;					//new
+//    lisp_addr_t		      *src_addr					//new
+	
     int i		= 0;		/* generic counter */
     unsigned int iseed  = 0;		/* initial random number generator */
     unsigned int nonce0 = 0;
@@ -123,7 +155,28 @@ int main(int argc, char *argv[])
     unsigned int port	= 0;		/* if -p <port> specified, put it in here to find overflow */
     emr_inner_src_port	= 0;		
     char  emr_inner_src_port_str[NI_MAXSERV];
-
+    
+    
+    /*
+     * Select the default rlocs for output control packets
+     */
+    
+    
+    
+    if(load_interface_list() != 1) {
+	lispd_log_msg(LISP_LOG_ERR, "load_interface_list");
+	exit(BAD);
+    }
+		
+    
+    set_default_ctrl_ifaces();						//new
+    
+    mnot 		= 0;
+    auth		= 1;
+    recordttl 		= htonl(DEFAULT_MAP_REGISTER_TIMEOUT);
+    mapvers		= 0;
+    reach		= 1;
+    
     /*
      * Temporary data
      */
@@ -132,14 +185,74 @@ int main(int argc, char *argv[])
     char buf[NI_MAXHOST];		/* buffer for getnameinfo() results */
 
     /*
-     *	parse args
+     *	parse args				//modified for long opts
      */  
 
     int  opt		= 0;
-    char *optstring	= "bc:dei:m:p:t:s:uv";
+    char *optstring	= "bc:dei:m:p:t:s:uvr";
+    int longindex	= 0;
+    static struct option long_options[] = {
+	{"noproxy", 	no_argument,		0, '0'},
+	{"mnot",	no_argument,		0, '1'},
+	{"recordttl",	required_argument,	0, '2'},
+	{"eidmlen",	required_argument,	0, '3'},
+	{"notauth",	no_argument,		0, '4'},
+	{"mapvers",	required_argument,	0, '5'},
+	{"eidpref",	required_argument,	0, '6'},
+	{"locator",	required_argument,	0, '7'},
+	{"locpr",	required_argument,	0, '8'},
+	{"locw",	required_argument,	0, '9'},
+	{"locmpr",	required_argument,	0, 'z'},
+	{"locmw",	required_argument,	0, 'y'},
+	{"notreach",	no_argument,		0, 'x'}
 
-    while ((opt = getopt (argc, argv, optstring)) != -1) {
+    };
+
+    while ((opt = getopt_long (argc, argv, optstring, long_options, &longindex)) != -1) {
 	switch (opt) {
+	  case '0':
+	    proxy = 0;
+	    break;
+	  case '1':
+	    mnot = 1;
+	    break;
+	  case '2':
+	    recordttl = atoi(optarg);
+	    break;
+	  case '3':
+	    eid_prefix_length = atoi(optarg);
+	    break;
+	  case '4':
+	    auth = 0;
+	    break;
+	  case '5':
+	    mapvers = atoi(optarg);
+	    break;
+	  case '6':
+	    eid_prefix = (lisp_addr_t *)malloc(sizeof(lisp_addr_t));
+	    eidpref = strdup(optarg);
+	    get_lisp_addr_from_char(eidpref, eid_prefix);
+	    break;
+	  case '7':
+	    locator_addr = (lisp_addr_t *)malloc(sizeof(lisp_addr_t));
+	    loc = strdup(optarg);
+	    get_lisp_addr_from_char(loc, locator_addr);
+	    break;
+	  case '8':
+	    priority = atoi(optarg);
+	    break;
+	  case '9':
+	    weight = atoi(optarg);
+	    break;
+	  case 'z':
+	    mpriority = atoi(optarg);
+	    break;
+	  case 'y':
+	    mweight = atoi(optarg);
+	    break;
+	  case 'x':
+	    reach = 0;
+	    break;  
 	case 'b':
 	    machinereadable += 1;
 	    break;
@@ -180,6 +293,13 @@ int main(int argc, char *argv[])
 		perror ("strdup(map_resolver)");
 		exit(BAD);
 	    }
+	    if ((map_server = strdup(optarg)) == NULL) {
+		perror ("strdup(map_server)");
+		exit(BAD);
+	    }
+	    break;
+	case 'r':				//new
+	    mreg = 1;
 	    break;
 	case 's':
 	    if ((src_ip_addr = strdup(optarg)) == NULL) {
@@ -208,9 +328,58 @@ int main(int argc, char *argv[])
 	}
     }
 
+    /*
+     * 	Map register
+     */
+    
+    if(mreg) {
+      if (src_ip_addr) {
+	  src_addrtype = get_afi(src_ip_addr);
+	  if (src_addrtype == AF_INET) {
+	    if (get_lisp_addr_from_char(src_ip_addr, default_ctrl_iface_v4->ipv4_address) == BAD) {
+	      lispd_log_msg(LISP_LOG_ERR, "source_ipv4");
+	    }
+	  }
+	  else {
+	    if (get_lisp_addr_from_char(src_ip_addr, default_ctrl_iface_v6->ipv6_address) == BAD) {
+	      lispd_log_msg(LISP_LOG_ERR, "source_ipv6");
+	    }
+	  }
+      }
+      mapping = new_local_mapping(*eid_prefix, eid_prefix_length, iid);
+      if(mapping == NULL) {
+	lispd_log_msg(LISP_LOG_ERR, "mapping");
+	free(eid_prefix);
+	exit(BAD);
+      }
+      locator = new_local_locator(locator_addr, &defstate, priority, weight, mpriority, mweight, 0);	
+      if(locator == NULL) {
+	lispd_log_msg(LISP_LOG_ERR, "locator");
+	free(locator_addr);
+	exit(BAD);
+      }
+      if ( add_locator_to_mapping(mapping, locator) == 0 ) {
+	lispd_log_msg(LISP_LOG_ERR, "add_locator_to_mapping");
+	exit(BAD);
+      }
+      if(add_map_server(map_server, 1, key, proxy) == 0) {
+	lispd_log_msg(LISP_LOG_ERR, "add_map_server");
+	exit(BAD);
+      }
+      if(map_register(mapping) == 0) {
+	lispd_log_msg(LISP_LOG_ERR, "map_register");
+	exit(BAD);
+      }
+      
+      exit(GOOD);
+    }
+    
+    
+    
     /* 
      *	save the program name somewhere
      */
+    
 
     if ((progname  = strdup(argv[0])) == NULL) {
 	perror ("strdup");
@@ -228,21 +397,28 @@ int main(int argc, char *argv[])
     /* 
      *	The requested eid should be in argv[0]
      */
-
-    if ((eid = strdup(argv[0])) == NULL) {
+    
+    
+    /*
+     * start skip if map register
+     *
+     */
+    
+    if (mreg == 0) {
+    if ((eid = strdup(argv[0])) == NULL) {		
 	perror ("strdup(argv[0])");
 	exit(BAD);
     }
 
-    if ((eid_name = strdup(eid)) == NULL) {
+    if ((eid_name = strdup(eid)) == NULL) {	
 	perror ("strdup(eid)");
 	exit(BAD);
     }
 
     if (map_resolver == NULL) {
-        fprintf(stderr,
-		"%s not set and -m not specified\n",
-		LISP_MAP_RESOLVER);
+	fprintf(stderr,
+		  "%s not set and -m not specified\n",
+		  LISP_MAP_RESOLVER); 
 	fprintf(stderr, USAGE, progname);
 	exit(BAD);
     }
@@ -265,6 +441,9 @@ int main(int argc, char *argv[])
     hints.ai_canonname = NULL;
     hints.ai_addr      = NULL;
     hints.ai_next      = NULL;
+
+    
+    
 
     if ((e = getaddrinfo(eid_name, NULL, &hints, &res)) != 0) {
 	fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(e));
@@ -289,10 +468,15 @@ int main(int argc, char *argv[])
     }
 
     freeaddrinfo(res);
+    
+
 
     /*
      *  likewise for the map resolver
      */
+
+    
+    
 
     if ((e = getaddrinfo(map_resolver, LISP_CONTROL_PORT_STR, &hints, &res)) != 0) {
 	fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(e));
@@ -300,7 +484,7 @@ int main(int argc, char *argv[])
     }
 
     if (res != NULL) {
-        mr_addrtype = res->ai_family;
+	mr_addrtype = res->ai_family;
 	mr_length = res->ai_addrlen;
 	if ((e = getnameinfo(res->ai_addr,res->ai_addrlen,
 			buf,NI_MAXHOST,NULL,0,NI_NUMERICHOST)) != 0) {
@@ -312,7 +496,7 @@ int main(int argc, char *argv[])
     }
 
     freeaddrinfo(res);
-
+    
     /*
      *	get an array of nonces of size 2*count
      *  (need 2*count as nonces are 64 bit as of 
@@ -328,6 +512,7 @@ int main(int argc, char *argv[])
 	perror ("getprotobyname");
 	exit(BAD);
     }
+
 
     if ((s = socket(mr_addrtype,SOCK_DGRAM,proto->p_proto)) < 0) {
 	perror("SOCK_DGRAM (s)");
@@ -345,13 +530,14 @@ int main(int argc, char *argv[])
 	    exit(BAD);
 	}
 	memcpy(&my_addr, res->ai_addr, res->ai_addrlen);
-	freeaddrinfo(res);
+	freeaddrinfo(res);	
     } else 
 	if (get_my_ip_addr(mr_addrtype,&my_addr)) {
 	    fprintf(stderr, "No usable %s source address\n",
 		    (mr_addrtype == AF_INET) ? "IPv4" : "IPv6");
 	    exit(BAD);
 	}
+      
 
     if (debug) {
 	if ((e = getnameinfo((struct sockaddr *)&my_addr,SA_LEN(my_addr.ss_family),
@@ -411,17 +597,18 @@ int main(int argc, char *argv[])
 		fprintf(stderr,"getnameinfo: %s\n",gai_strerror(e));
 		exit(BAD);
 	    }
-
-	    printf("Send map-request to %s (%s) for %s (%s) ...\n",
-		   mr_name,
-		   buf,
-		   eid_name,
-		   eid);
-	} else if (machinereadable && i == 0) {
-            printf("MAPRESOLVER=%s\nEID=%s\n", mr_name, eid_name);
+	    	printf("Send map-request to %s (%s) for %s (%s) ...\n",
+		   	mr_name,
+		   	buf,
+		   	eid_name,
+		   	eid);
+	    } else if (machinereadable && i == 0) {
+		printf("MAPRESOLVER=%s\nEID=%s\n", mr_name, eid_name);
+		
             }                  	
         else if (!machinereadable)
-	    printf("Send map-request to %s for %s ...\n", mr_name, eid_name);
+		printf("Send map-request to %s for %s ...\n", mr_name, eid_name);
+	    
 
 	if (send_map_request(s,
 			     nonce0,
@@ -472,6 +659,15 @@ int main(int argc, char *argv[])
 	}					/* timed out */
     }
     printf("*** No map-reply received ***\n");
+    exit(GOOD);
+    
+}
+
+    /*
+     * end skip if map register
+     *
+     */
+    
     exit(GOOD);
 }
 

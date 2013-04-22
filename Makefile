@@ -35,8 +35,13 @@
 #	$Header: /mnt/disk1/dmm/src/lig/RCS/Makefile,v 1.1 2010/11/14 20:49:29 dmm Exp $
 #
 
-SRC      = lig.c send_map_request.c lib.c cksum.c print.c get_my_ip_addr.c
-INC	 = lig.h lig-external.h
+SRC      = lig.c send_map_request.c lib.c cksum.c print.c get_my_ip_addr.c \
+	   testing/lispd_config.c testing/lispd_lib.c testing/lispd_locator.c testing/lispd_log.c \
+	   testing/lispd_mapping.c testing/lispd_map_register.c testing/lispd_pkt_lib.c \
+	   testing/lispd_sockets.c testing/lispd_iface_list.c
+INC	 = lig.h lig-external.h testing/lispd_external.h testing/lispd.h testing/lispd_lib.h testing/lispd_log.h  \
+	   testing/lispd_locator.h testing/lispd_map_register.h  testing/lispd_mapping.h  \
+	   testing/lispd_pkt_lib.h testing/lispd_sockets.h testing/lispd_iface_list.h
 OBJ	 = $(SRC:%.c=%.o)
 EXE      = lig
 #
@@ -56,7 +61,7 @@ MISC     = Makefile README
 #
 CC	 = gcc
 CFLAGS   = -Wall -Wno-implicit-function-declaration
-LDLIBS   = 
+LDLIBS   = -lcrypto -lssl -lrt -lm
 LDFLAGS  = 
 #
 #
