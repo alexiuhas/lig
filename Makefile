@@ -72,5 +72,5 @@ ${MAN}: ${MANSRC}
 	groff -t -e -mandoc -Tascii ${MANSRC} | col -bx > ${MANOUT}
 
 clean:
-	/bin/rm -f ${OBJ} ${EXE} ${MANOUT} core a.out Make.log Make.err *~
+	/bin/rm -f *.o testing/*.o ${EXE} ${MANOUT} core a.out Make.log Make.err *~ testing/*~
 
