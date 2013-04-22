@@ -229,7 +229,7 @@ void *pkt_fill_mapping_record(
         return NULL;
 
 //    rec->ttl                    = htonl(DEFAULT_MAP_REGISTER_TIMEOUT);
-    rec->ttl                    = recordttl;				//new
+    rec->ttl                    = htonl(recordttl);				//new
     rec->locator_count          = mapping->locator_count;
     rec->eid_prefix_length      = mapping->eid_prefix_length;
     rec->action                 = 0;
