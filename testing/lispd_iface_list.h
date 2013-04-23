@@ -61,8 +61,6 @@ typedef struct lispd_iface_list_elt_ {
     struct lispd_iface_list_elt_     *next;
 }lispd_iface_list_elt;
 
-
-
 int load_interface_list();
 
 /*

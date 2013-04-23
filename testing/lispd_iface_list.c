@@ -29,6 +29,7 @@
  *
  */
 
+#include "lispd.h"
 #include "lispd_external.h"
 #include "lispd_lib.h"
 #include "lispd_sockets.h"
@@ -47,8 +48,6 @@ lispd_iface_elt *default_ctrl_iface_v4  = NULL;
 lispd_iface_elt *default_ctrl_iface_v6  = NULL;
 
 
-
-
 int load_interface_list()
 {
 
@@ -63,7 +62,7 @@ int load_interface_list()
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
 	if (ifa->ifa_addr == NULL)
 	    continue;
-	if (ifa->ifa_addr != NULL) {
+	if (ifa->ifa_addr != NULL && strcmp("lo", ifa->ifa_name) != 0) {
 	    add_interface(ifa->ifa_name);
 	}
     }
