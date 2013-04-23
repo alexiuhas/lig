@@ -135,8 +135,8 @@ int main(int argc, char *argv[])
     char 			*map_server		= getenv(LISP_MAP_RESOLVER); 			//new
     uint8_t			proxy			= 1;
     uint8_t			defstate		= 1;
-    char			*key			= NULL;
-				key 			= strdup("1");
+    char			*pass			= NULL;
+
     
 //    lispd_map_server_list_t   *ms			= 0;					//new
 //    lisp_addr_t		      *src_addr					//new
@@ -204,7 +204,8 @@ int main(int argc, char *argv[])
 	{"locw",	required_argument,	0, '9'},
 	{"locmpr",	required_argument,	0, 'z'},
 	{"locmw",	required_argument,	0, 'y'},
-	{"notreach",	no_argument,		0, 'x'}
+	{"notreach",	no_argument,		0, 'x'},
+	{"pass",	required_argument, 	0, 'k'}
 
     };
 
@@ -253,6 +254,9 @@ int main(int argc, char *argv[])
 	  case 'x':
 	    reach = 0;
 	    break;  
+	  case 'k':
+	    pass = strdup(optarg);
+	    break;
 	case 'b':
 	    machinereadable += 1;
 	    break;
@@ -362,7 +366,7 @@ int main(int argc, char *argv[])
 	lispd_log_msg(LISP_LOG_ERR, "add_locator_to_mapping");
 	exit(BAD);
       }
-      if(add_map_server(map_server, 1, key, proxy) == 0) {
+      if(add_map_server(map_server, 1, pass, proxy) == 0) {
 	lispd_log_msg(LISP_LOG_ERR, "add_map_server");
 	exit(BAD);
       }
