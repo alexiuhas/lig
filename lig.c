@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
     uint8_t			mweight 		= 100;
     char 			*map_server		= getenv(LISP_MAP_RESOLVER); 			//new
     uint8_t			proxy			= 1;
-    uint8_t			defstate		= 1;
+    uint8_t			reach			= UP;
     char			*pass			= NULL;
 
     
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
     auth		= 1;
     recordttl 		= htonl(DEFAULT_MAP_REGISTER_TIMEOUT);
     mapvers		= 0;
-    reach		= 1;
+//    reach		= 1;
     
     /*
      * Temporary data
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 	    mweight = atoi(optarg);
 	    break;
 	  case 'x':
-	    reach = 0;
+	    reach = DOWN;
 	    break;  
 	  case 'k':
 	    pass = strdup(optarg);
@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
 	free(eid_prefix);
 	exit(BAD);
       }
-      locator = new_local_locator(locator_addr, &defstate, priority, weight, mpriority, mweight, 0);	
+      locator = new_local_locator(locator_addr, reach, priority, weight, mpriority, mweight, 0);	
       if(locator == NULL) {
 	lispd_log_msg(LISP_LOG_ERR, "locator");
 	free(locator_addr);

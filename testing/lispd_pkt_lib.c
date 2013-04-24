@@ -228,7 +228,7 @@ void *pkt_fill_mapping_record(
     if ((rec == NULL) || (mapping == NULL))
         return NULL;
 
-//    rec->ttl                    = htonl(DEFAULT_MAP_REGISTER_TIMEOUT);
+
     rec->ttl                    = htonl(recordttl);				//new
     rec->locator_count          = mapping->locator_count;
     rec->eid_prefix_length      = mapping->eid_prefix_length;
@@ -259,7 +259,7 @@ void *pkt_fill_mapping_record(
                 loc_ptr->local       = 1;
                 if (probed_rloc && compare_lisp_addr_t(locator->locator_addr,probed_rloc)==0)
                     loc_ptr->probed  = 1;       /* XXX probed locator, should check addresses */
-                loc_ptr->reachable   = locator->state && reach;						//modified
+                loc_ptr->reachable   = locator->state;						//modified
                 loc_ptr->locator_afi = htons(get_lisp_afi(locator->locator_addr->afi,NULL));
 
                 if ((cpy_len = copy_addr((void *) CO(loc_ptr,
