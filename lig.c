@@ -91,6 +91,16 @@ unsigned int mreg			= 0;			//new
 int32_t      iid			= -1;
 
 
+
+void set_locator_defaults(
+	uint8_t 		*priority,
+	uint8_t 		*weight,
+	uint8_t 		*mpriority,
+	uint8_t 		*mweight,
+	uint8_t 		*reach);
+
+
+
 int main(int argc, char *argv[])
 {
 
@@ -136,6 +146,8 @@ int main(int argc, char *argv[])
     uint8_t			proxy			= 1;
     uint8_t			reach			= UP;
     char			*pass			= NULL;
+    int 			loccount		= 0;
+//    int 			counter			= 0;
 
     
 //    lispd_map_server_list_t   *ms			= 0;					//new
@@ -175,8 +187,7 @@ int main(int argc, char *argv[])
     auth		= 1;
     recordttl 		= htonl(DEFAULT_MAP_REGISTER_TIMEOUT);
     mapvers		= 0;
-//    reach		= 1;
-    
+  
     /*
      * Temporary data
      */
@@ -205,7 +216,9 @@ int main(int argc, char *argv[])
 	{"locmpr",	required_argument,	0, 'z'},
 	{"locmw",	required_argument,	0, 'y'},
 	{"notreach",	no_argument,		0, 'x'},
-	{"pass",	required_argument, 	0, 'k'}
+	{"pass",	required_argument, 	0, 'k'},
+	{"loccount",	required_argument,	0, 'l'},
+	{"addloc",	no_argument,		0, 'a'}
 
     };
 
@@ -222,6 +235,12 @@ int main(int argc, char *argv[])
 	    break;
 	  case '3':
 	    eid_prefix_length = atoi(optarg);
+	    mapping = new_local_mapping(*eid_prefix, eid_prefix_length, iid);
+	    if(mapping == NULL) {
+	      lispd_log_msg(LISP_LOG_ERR, "mapping");
+	      free(eid_prefix);
+	      exit(BAD);
+	    }
 	    break;
 	  case '4':
 	    auth = 0;
@@ -235,8 +254,12 @@ int main(int argc, char *argv[])
 	    get_lisp_addr_from_char(eidpref, eid_prefix);
 	    break;
 	  case '7':
+//	    counter++;
 	    locator_addr = (lisp_addr_t *)malloc(sizeof(lisp_addr_t));
-	    loc = strdup(optarg);
+	    if ((loc = strdup(optarg)) == NULL) {
+		perror ("strdup(loc)");
+		exit(BAD);
+	    }
 	    get_lisp_addr_from_char(loc, locator_addr);
 	    break;
 	  case '8':
@@ -256,6 +279,22 @@ int main(int argc, char *argv[])
 	    break;  
 	  case 'k':
 	    pass = strdup(optarg);
+	    break;
+	  case 'l':
+	    loccount = atoi(optarg);
+	    break;
+	  case 'a':
+	    locator = new_local_locator(locator_addr, reach, priority, weight, mpriority, mweight, 0);	
+	    if(locator == NULL) {
+	      lispd_log_msg(LISP_LOG_ERR, "locator");
+	      free(locator_addr);
+	      exit(BAD);
+	    }
+	    if ( add_locator_to_mapping(mapping, locator) == 0 ) {
+	      lispd_log_msg(LISP_LOG_ERR, "add_locator_to_mapping");
+	      exit(BAD);
+	    }
+	    set_locator_defaults(&priority, &weight, &mpriority, &mweight, &reach);
 	    break;
 	case 'b':
 	    machinereadable += 1;
@@ -350,22 +389,24 @@ int main(int argc, char *argv[])
 	    }
 	  }
       }
-      mapping = new_local_mapping(*eid_prefix, eid_prefix_length, iid);
+/*      mapping = new_local_mapping(*eid_prefix, eid_prefix_length, iid);
       if(mapping == NULL) {
 	lispd_log_msg(LISP_LOG_ERR, "mapping");
 	free(eid_prefix);
 	exit(BAD);
       }
-      locator = new_local_locator(locator_addr, reach, priority, weight, mpriority, mweight, 0);	
-      if(locator == NULL) {
-	lispd_log_msg(LISP_LOG_ERR, "locator");
-	free(locator_addr);
-	exit(BAD);
-      }
-      if ( add_locator_to_mapping(mapping, locator) == 0 ) {
-	lispd_log_msg(LISP_LOG_ERR, "add_locator_to_mapping");
-	exit(BAD);
-      }
+      for (counter = 1; counter <= loccount; counter++) {*/
+/*	locator = new_local_locator(locator_addr, reach, priority, weight, mpriority, mweight, 0);	
+	if(locator == NULL) {
+	  lispd_log_msg(LISP_LOG_ERR, "locator");
+	  free(locator_addr);
+	  exit(BAD);
+	}
+	if ( add_locator_to_mapping(mapping, locator) == 0 ) {
+	  lispd_log_msg(LISP_LOG_ERR, "add_locator_to_mapping");
+	  exit(BAD);
+	}*/
+  /*    }*/
       if(add_map_server(map_server, 1, pass, proxy) == 0) {
 	lispd_log_msg(LISP_LOG_ERR, "add_map_server");
 	exit(BAD);
@@ -675,4 +716,18 @@ int main(int argc, char *argv[])
     exit(GOOD);
 }
 
+
+void set_locator_defaults(
+	uint8_t 		*priority,
+	uint8_t 		*weight,
+	uint8_t 		*mpriority,
+	uint8_t 		*mweight,
+	uint8_t 		*reach)
+{
+      *priority 		= 1;
+      *weight 			= 100;
+      *mpriority 		= 1;
+      *mweight 			= 100;
+      *reach			= UP;
+}
 
