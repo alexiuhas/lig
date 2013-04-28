@@ -95,8 +95,12 @@ typedef enum			{FALSE,TRUE} boolean;
 #define	MAX_EPHEMERAL_PORT	65535
 #define MAX_IID                 16777215
 
-#define	USAGE	"usage: %s [-b] [-c <count>] [-d] [-e] [-m <map resolver>] [-r] [-p <port>] \
-[-s <source address>] [-t <timeout>] [-u] [-v] <EID>\n"		//modified
+#define	USAGE	"      Usage:\nFor Map Request: %s [-b] [-c <count>] [-d] [-e] [-m <map resolver>] [-r] [-p <port>] \
+[-s <source address>] [-t <timeout>] [-u] [-v] <EID>\n\nFor Map Register: \
+./lig -r -m <map resolver/server> --eidpref <EID> --eidmlen <EID mask length> --pass <password> \
+[--noproxy] [--mnot] [--recordttl <TTL>] [--notauth] [--mapvers <Map Version>] --locator <RLOC> \
+[--locpr <Priority>] [--locw <Weight>] [--locmpr <MPriority>] [--locmw <MWeight>] [--notreach] \
+--addloc [-v]\n\nFor more detailed information type man ./lig.1\n\n"		//modified
 
 /*
  *	VERSION 
