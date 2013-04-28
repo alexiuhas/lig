@@ -148,7 +148,7 @@ int get_up_locator_length(
  */
 
 
-int get_mapping_length(lispd_mapping_elt *mapping)              //used
+int get_mapping_length(lispd_mapping_elt *mapping)              
 {
     int ident_len = 0;
     switch (mapping->eid_prefix.afi) {
@@ -229,13 +229,13 @@ void *pkt_fill_mapping_record(
         return NULL;
 
 
-    rec->ttl                    = htonl(recordttl);				//new
+    rec->ttl                    = htonl(recordttl);		
     rec->locator_count          = mapping->locator_count;
     rec->eid_prefix_length      = mapping->eid_prefix_length;
     rec->action                 = 0;
-    rec->authoritative          = auth;					//modified
-    rec->version_hi             = 0;				//modified	
-    rec->version_low            = mapvers;				//modified
+    rec->authoritative          = auth;				
+    rec->version_hi             = 0;				
+    rec->version_low            = mapvers;			
 
     loc_ptr = (lispd_pkt_mapping_record_locator_t *)
                 pkt_fill_eid(&(rec->eid_prefix_afi), mapping);

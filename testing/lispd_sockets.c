@@ -291,7 +291,7 @@ int open_data_input_socket(int afi){
  * If the src port is 0, then a random port is used.
  */
 
-int send_udp_ipv4_packet(					//used
+int send_udp_ipv4_packet(			
         lisp_addr_t *src_addr,
         lisp_addr_t *dst_addr,
         uint16_t    src_port,

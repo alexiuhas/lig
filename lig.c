@@ -87,10 +87,13 @@ unsigned int udp_checksum_disabled	= 0;
 unsigned int disallow_eid		= 0;
 unsigned int debug			= 0;
 unsigned int machinereadable		= 0;
-unsigned int mreg			= 0;			//new
+unsigned int mreg			= 0;			// used to specify it is a map-register message
 int32_t      iid			= -1;
 
-
+/*
+ * Set the locator paramaters priority, weight, mpriority, mweight 
+ * and the Reachability bit to their default values
+ */
 
 void set_locator_defaults(
 	uint8_t 		*priority,
@@ -130,6 +133,10 @@ int main(int argc, char *argv[])
     struct sockaddr_storage eid_addr;
     struct sockaddr_storage map_resolver_addr;
     
+    /*
+     * The following are used in the map-register function
+     */
+    
     int				src_addrtype		= 0;
     lispd_mapping_elt		*mapping		= NULL;
     char 			*eidpref		= NULL;
@@ -142,16 +149,13 @@ int main(int argc, char *argv[])
     uint8_t			weight 			= 100;
     uint8_t			mpriority 		= 1;
     uint8_t			mweight 		= 100;
-    char 			*map_server		= getenv(LISP_MAP_RESOLVER); 			//new
+    char 			*map_server		= getenv(LISP_MAP_RESOLVER); 
     uint8_t			proxy			= 1;
     uint8_t			reach			= UP;
     char			*pass			= NULL;
-    int 			loccount		= 0;
-//    int 			counter			= 0;
 
     
-//    lispd_map_server_list_t   *ms			= 0;					//new
-//    lisp_addr_t		      *src_addr					//new
+    
 	
     int i		= 0;		/* generic counter */
     unsigned int iseed  = 0;		/* initial random number generator */
@@ -170,23 +174,25 @@ int main(int argc, char *argv[])
     
     
     /*
-     * Select the default rlocs for output control packets
+     * Run through the interfaces and select a usable address as the source address
      */
-    
-    
+        
     
     if(load_interface_list() != 1) {
 	lispd_log_msg(LISP_LOG_ERR, "load_interface_list");
 	exit(BAD);
     }
 		
+    set_default_ctrl_ifaces();	
     
-    set_default_ctrl_ifaces();						//new
+    /*
+     * Variables used for filling in the map-register message
+     */
     
-    mnot 		= 0;
-    auth		= 1;
-    recordttl 		= htonl(DEFAULT_MAP_REGISTER_TIMEOUT);
-    mapvers		= 0;
+    mnot 		= 0;						// Map-Notify bit
+    auth		= 1;						// Authoritative bit
+    recordttl 		= htonl(DEFAULT_MAP_REGISTER_TIMEOUT);		// Record TTL
+    mapvers		= 0;						// Map Version
   
     /*
      * Temporary data
@@ -217,7 +223,6 @@ int main(int argc, char *argv[])
 	{"locmw",	required_argument,	0, 'y'},
 	{"notreach",	no_argument,		0, 'x'},
 	{"pass",	required_argument, 	0, 'k'},
-	{"loccount",	required_argument,	0, 'l'},
 	{"addloc",	no_argument,		0, 'a'}
 
     };
@@ -225,16 +230,16 @@ int main(int argc, char *argv[])
     while ((opt = getopt_long (argc, argv, optstring, long_options, &longindex)) != -1) {
 	switch (opt) {
 	  case '0':
-	    proxy = 0;
+	    proxy = 0;			// Proxy Reply bit
 	    break;
 	  case '1':
-	    mnot = 1;
+	    mnot = 1;			// want Map Notify
 	    break;
 	  case '2':
-	    recordttl = atoi(optarg);
+	    recordttl = atoi(optarg);	
 	    break;
-	  case '3':
-	    eid_prefix_length = atoi(optarg);
+	  case '3':									//create the new mapping element with the 
+	    eid_prefix_length = atoi(optarg);						//eid prefix address and length specified
 	    mapping = new_local_mapping(*eid_prefix, eid_prefix_length, iid);
 	    if(mapping == NULL) {
 	      lispd_log_msg(LISP_LOG_ERR, "mapping");
@@ -243,24 +248,23 @@ int main(int argc, char *argv[])
 	    }
 	    break;
 	  case '4':
-	    auth = 0;
+	    auth = 0;						// Authoritative bit
 	    break;
 	  case '5':
-	    mapvers = atoi(optarg);
+	    mapvers = atoi(optarg);				// Map Version
 	    break;
 	  case '6':
 	    eid_prefix = (lisp_addr_t *)malloc(sizeof(lisp_addr_t));
 	    eidpref = strdup(optarg);
-	    get_lisp_addr_from_char(eidpref, eid_prefix);
+	    get_lisp_addr_from_char(eidpref, eid_prefix);			// get the eid prefix address
 	    break;
 	  case '7':
-//	    counter++;
 	    locator_addr = (lisp_addr_t *)malloc(sizeof(lisp_addr_t));
 	    if ((loc = strdup(optarg)) == NULL) {
 		perror ("strdup(loc)");
 		exit(BAD);
 	    }
-	    get_lisp_addr_from_char(loc, locator_addr);
+	    get_lisp_addr_from_char(loc, locator_addr);				// get the locator address
 	    break;
 	  case '8':
 	    priority = atoi(optarg);
@@ -277,24 +281,21 @@ int main(int argc, char *argv[])
 	  case 'x':
 	    reach = DOWN;
 	    break;  
-	  case 'k':
+	  case 'k':								// the Map Server password used to encode with HMAC
 	    pass = strdup(optarg);
 	    break;
-	  case 'l':
-	    loccount = atoi(optarg);
-	    break;
 	  case 'a':
-	    locator = new_local_locator(locator_addr, reach, priority, weight, mpriority, mweight, 0);	
+	    locator = new_local_locator(locator_addr, reach, priority, weight, mpriority, mweight, 0);			//generate the locator element
 	    if(locator == NULL) {
 	      lispd_log_msg(LISP_LOG_ERR, "locator");
 	      free(locator_addr);
 	      exit(BAD);
 	    }
-	    if ( add_locator_to_mapping(mapping, locator) == 0 ) {
+	    if ( add_locator_to_mapping(mapping, locator) == 0 ) {							//add the locator element to the mapping
 	      lispd_log_msg(LISP_LOG_ERR, "add_locator_to_mapping");
 	      exit(BAD);
 	    }
-	    set_locator_defaults(&priority, &weight, &mpriority, &mweight, &reach);
+	    set_locator_defaults(&priority, &weight, &mpriority, &mweight, &reach);					//reset the locator parameters for the next entry
 	    break;
 	case 'b':
 	    machinereadable += 1;
@@ -341,7 +342,7 @@ int main(int argc, char *argv[])
 		exit(BAD);
 	    }
 	    break;
-	case 'r':				//new
+	case 'r':							// Specify it is a Map register message
 	    mreg = 1;
 	    break;
 	case 's':
@@ -376,38 +377,20 @@ int main(int argc, char *argv[])
      */
     
     if(mreg) {
-      if (src_ip_addr) {
-	  src_addrtype = get_afi(src_ip_addr);
+      if (src_ip_addr) {									//use the source address specified 
+	  src_addrtype = get_afi(src_ip_addr);							//in the commandline
 	  if (src_addrtype == AF_INET) {
 	    if (get_lisp_addr_from_char(src_ip_addr, default_ctrl_iface_v4->ipv4_address) == BAD) {
 	      lispd_log_msg(LISP_LOG_ERR, "source_ipv4");
 	    }
 	  }
-	  else {
+	  else {				
 	    if (get_lisp_addr_from_char(src_ip_addr, default_ctrl_iface_v6->ipv6_address) == BAD) {
 	      lispd_log_msg(LISP_LOG_ERR, "source_ipv6");
 	    }
 	  }
       }
-/*      mapping = new_local_mapping(*eid_prefix, eid_prefix_length, iid);
-      if(mapping == NULL) {
-	lispd_log_msg(LISP_LOG_ERR, "mapping");
-	free(eid_prefix);
-	exit(BAD);
-      }
-      for (counter = 1; counter <= loccount; counter++) {*/
-/*	locator = new_local_locator(locator_addr, reach, priority, weight, mpriority, mweight, 0);	
-	if(locator == NULL) {
-	  lispd_log_msg(LISP_LOG_ERR, "locator");
-	  free(locator_addr);
-	  exit(BAD);
-	}
-	if ( add_locator_to_mapping(mapping, locator) == 0 ) {
-	  lispd_log_msg(LISP_LOG_ERR, "add_locator_to_mapping");
-	  exit(BAD);
-	}*/
-  /*    }*/
-      if(add_map_server(map_server, 1, pass, proxy) == 0) {
+      if(add_map_server(map_server, 1, pass, proxy) == 0) {					// add the map server entry to the list
 	lispd_log_msg(LISP_LOG_ERR, "add_map_server");
 	exit(BAD);
       }
@@ -415,7 +398,7 @@ int main(int argc, char *argv[])
 	lispd_log_msg(LISP_LOG_ERR, "map_register");
 	exit(BAD);
       }
-      
+      printf("\nSent Map-Register to %s for %s/%d\n\n", map_server, eidpref, eid_prefix_length);
       exit(GOOD);
     }
     

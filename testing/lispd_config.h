@@ -33,7 +33,12 @@
  *
  */
 
-int add_map_server(					//used
+
+/*
+ *  add_map_server to map_servers
+ */
+
+int add_map_server(
         char       *map_server,
         int        key_type,
         char       *key,

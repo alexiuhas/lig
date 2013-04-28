@@ -118,7 +118,9 @@ typedef struct lispd_pkt_map_register_t_ {
 } PACKED lispd_pkt_map_register_t;
 
 
-//int map_register(timer *t, void *arg);
+/*
+ * Build and send a Map-Register message
+ */
 
 int map_register(lispd_mapping_elt	*mapping_elt);
 

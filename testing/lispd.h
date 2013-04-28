@@ -233,8 +233,8 @@ int err;
 
 
 
-#define LISP_AFI_IP                     1					//new
-#define LISP_AFI_IPV6                   2					//new
+#define LISP_AFI_IP                     1	
+#define LISP_AFI_IPV6                   2	
 
 /*
  * Maximum length (in bytes) of an IP address
@@ -272,7 +272,7 @@ typedef struct lisphdr {
 /*
  * Lisp address structure
  */
-typedef struct {	                    				    //used
+typedef struct {	                    
   union {
     struct in_addr ip;
     struct in6_addr ipv6;
@@ -304,7 +304,7 @@ typedef struct _lispd_weighted_addr_list_t {
 
 
 
-typedef struct _lispd_map_server_list_t {                   //used
+typedef struct _lispd_map_server_list_t {                   
     lisp_addr_t                     *address;
     uint8_t                         key_type;
     char                            *key;
@@ -325,7 +325,7 @@ typedef struct packet_tuple_ {
  *  for map-register auth data...
  */
 
-#define LISP_SHA1_AUTH_DATA_LEN         20                  //used
+#define LISP_SHA1_AUTH_DATA_LEN         20                  
 
 
 /*
@@ -353,7 +353,7 @@ typedef struct packet_tuple_ {
  * locators follow.
  */
 
-typedef struct lispd_pkt_mapping_record_t_ {                    //used
+typedef struct lispd_pkt_mapping_record_t_ {                   
     uint32_t ttl;
     uint8_t locator_count;
     uint8_t eid_prefix_length;
@@ -384,7 +384,7 @@ typedef struct lispd_pkt_mapping_record_t_ {                    //used
  * Fixed portion of the mapping record locator. Variable length
  * locator address follows.
  */
-typedef struct lispd_pkt_mapping_record_locator_t_ {                //used
+typedef struct lispd_pkt_mapping_record_locator_t_ {               
     uint8_t priority;
     uint8_t weight;
     uint8_t mpriority;
