@@ -173,17 +173,7 @@ int main(int argc, char *argv[])
     char  emr_inner_src_port_str[NI_MAXSERV];
     
     
-    /*
-     * Run through the interfaces and select a usable address as the source address
-     */
-        
     
-    if(load_interface_list() != 1) {
-	lispd_log_msg(LISP_LOG_ERR, "load_interface_list");
-	exit(BAD);
-    }
-		
-    set_default_ctrl_ifaces();	
     
     /*
      * Variables used for filling in the map-register message
@@ -194,8 +184,13 @@ int main(int argc, char *argv[])
     recordttl 		= htonl(DEFAULT_MAP_REGISTER_TIMEOUT);		// Record TTL
     mapvers		= 0;						// Map Version
     
-    mrauth  		= 0;
-    smri		= 0;
+    
+    /*
+     * Variables used for filling in the map request message
+     */
+    
+    mrauth  		= 0;						// Authoritative bit
+    smri		= 0;						// SMR-invoked bit
   
     /*
      * Temporary data
@@ -349,6 +344,16 @@ int main(int argc, char *argv[])
 	    break;
 	case 'r':							// Specify it is a Map register message
 	    mreg = 1;
+	    
+	    /*
+	     * Run through the interfaces and select a usable address as the source address
+	     */
+        
+	    if(load_interface_list() != 1) {
+		lispd_log_msg(LISP_LOG_ERR, "load_interface_list");
+		exit(BAD);
+	    }	
+	    set_default_ctrl_ifaces();	
 	    break;
 	case 's':
 	    if ((src_ip_addr = strdup(optarg)) == NULL) {
@@ -369,10 +374,10 @@ int main(int argc, char *argv[])
 	    udp_checksum_disabled = 1;
 	    break;
 	case 'h':
-	    mrauth = 1;
+	    mrauth = 1;					// Map Request Authoritative bit
 	    break;
 	case 'n':
-	    smri = 1;
+	    smri = 1;					// SMR-invoked bit
 	    break;
 	case 'v':
 	    fprintf(stderr, VERSION, argv[0]);
