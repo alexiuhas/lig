@@ -193,6 +193,9 @@ int main(int argc, char *argv[])
     auth		= 1;						// Authoritative bit
     recordttl 		= htonl(DEFAULT_MAP_REGISTER_TIMEOUT);		// Record TTL
     mapvers		= 0;						// Map Version
+    
+    mrauth  		= 0;
+    smri		= 0;
   
     /*
      * Temporary data
@@ -223,7 +226,9 @@ int main(int argc, char *argv[])
 	{"locmw",	required_argument,	0, 'y'},
 	{"notreach",	no_argument,		0, 'x'},
 	{"pass",	required_argument, 	0, 'k'},
-	{"addloc",	no_argument,		0, 'a'}
+	{"addloc",	no_argument,		0, 'a'},
+	{"mrauth", 	no_argument,		0, 'h'},
+	{"smri",	no_argument,		0, 'n'}
 
     };
 
@@ -362,6 +367,12 @@ int main(int argc, char *argv[])
 	    break;
 	case 'u':
 	    udp_checksum_disabled = 1;
+	    break;
+	case 'h':
+	    mrauth = 1;
+	    break;
+	case 'n':
+	    smri = 1;
 	    break;
 	case 'v':
 	    fprintf(stderr, VERSION, argv[0]);

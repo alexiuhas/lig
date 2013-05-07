@@ -40,6 +40,7 @@
 	uint8_t		auth;
 	uint32_t	recordttl;
 	uint8_t		mapvers;
+	
 
 extern  lispd_addr_list_t *map_resolvers;
 extern  lispd_addr_list_t *proxy_itrs;

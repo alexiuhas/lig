@@ -44,6 +44,9 @@ extern  unsigned int	disallow_eid;
 extern  unsigned int	udp_checksum_disabled;
 extern	ushort		emr_inner_src_port;
 
+	u_char		mrauth;	
+	u_char		smri;
+
 #ifdef BSD
 #include <string.h>
 #else

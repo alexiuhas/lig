@@ -96,7 +96,7 @@ typedef enum			{FALSE,TRUE} boolean;
 #define MAX_IID                 16777215
 
 #define	USAGE	"      Usage:\nFor Map Request: %s [-b] [-c <count>] [-d] [-e] [-m <map resolver>] [-r] [-p <port>] \
-[-s <source address>] [-t <timeout>] [-u] [-v] <EID>\n\nFor Map Register: \
+[-s <source address>] [-t <timeout>] [-u] [-v] [--mrauth] [--smri] <EID>\n\nFor Map Register: \
 ./lig -r -m <map resolver/server> --eidpref <EID> --eidmlen <EID mask length> --pass <password> \
 [--noproxy] [--mnot] [--recordttl <TTL>] [--notauth] [--mapvers <Map Version>] --locator <RLOC> \
 [--locpr <Priority>] [--locw <Weight>] [--locmpr <MPriority>] [--locmw <MWeight>] [--notreach] \
@@ -263,8 +263,18 @@ struct map_request_pkt {
 	uchar           map_data_present:1;
 	uchar           rloc_probe:1;
 	uchar           smr_bit:1;
+
+
 #endif
-	uchar           reserved1;
+#ifdef LITTLE_ENDIAN
+	uchar           reserved1:6;
+	uchar		smr_invoked:1;
+	uchar		proxy_itr:1;
+#else
+	uchar		proxy_itr:1;
+	uchar		smr_invoked:1;
+	uchar           reserved1:6;
+#endif	
 #ifdef LITTLE_ENDIAN
 	ushort          irc:5;
         uchar           reserved2:3;

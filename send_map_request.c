@@ -322,10 +322,12 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
      * We set Source-EID-AFI to 0 and skip the Source EID Address field
      */
 
+    map_request->smr_invoked		     = smri;
+    map_request->proxy_itr		     = 0;
     map_request->smr_bit                     = 0;
     map_request->rloc_probe                  = 0;
     map_request->map_data_present            = 0;
-    map_request->auth_bit                    = 0;
+    map_request->auth_bit                    = mrauth;
     map_request->lisp_type                   = LISP_MAP_REQUEST;
     map_request->irc                         = 0;
     map_request->record_count                = 1;
