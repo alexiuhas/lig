@@ -89,6 +89,7 @@ unsigned int debug			= 0;
 unsigned int machinereadable		= 0;
 unsigned int mreg			= 0;			// used to specify it is a map-register message
 int32_t      iid			= -1;
+int 	     encapsulate		= 1;
 
 /*
  * Set the locator paramaters priority, weight, mpriority, mweight 
@@ -190,8 +191,10 @@ int main(int argc, char *argv[])
      */
     
     mrauth  		= 0;						// Authoritative bit
+    probe		= 0;						// RLOC Probe bit
+    smr			= 0;						// SMR bit
     smri		= 0;						// SMR-invoked bit
-  
+
     /*
      * Temporary data
      */
@@ -223,8 +226,10 @@ int main(int argc, char *argv[])
 	{"pass",	required_argument, 	0, 'k'},
 	{"addloc",	no_argument,		0, 'a'},
 	{"mrauth", 	no_argument,		0, 'h'},
-	{"smri",	no_argument,		0, 'n'}
-
+	{"probe",	no_argument,		0, 'o'},
+	{"smr",		no_argument,		0, 'q'},
+	{"smri",	no_argument,		0, 'n'},
+	{"noencap",	no_argument,		0, 'l'}
     };
 
     while ((opt = getopt_long (argc, argv, optstring, long_options, &longindex)) != -1) {
@@ -376,8 +381,17 @@ int main(int argc, char *argv[])
 	case 'h':
 	    mrauth = 1;					// Map Request Authoritative bit
 	    break;
+	case 'o':
+	    probe = 1;					// RLOC Probe bit
+	    break;
+	case 'q':
+	    smr = 1;					// SMR bit
+	    break;
 	case 'n':
 	    smri = 1;					// SMR-invoked bit
+	    break;
+	case 'l':
+	    encapsulate = 0;
 	    break;
 	case 'v':
 	    fprintf(stderr, VERSION, argv[0]);
@@ -641,18 +655,33 @@ int main(int argc, char *argv[])
 		fprintf(stderr,"getnameinfo: %s\n",gai_strerror(e));
 		exit(BAD);
 	    }
-	    	printf("Send map-request to %s (%s) for %s (%s) ...\n",
+	    if (encapsulate == 1){
+	    	printf("Send encapsulated map-request to %s (%s) for %s (%s) ...\n",
 		   	mr_name,
 		   	buf,
 		   	eid_name,
 		   	eid);
+	    }
+	    else {
+	      printf("Send map-request to %s (%s) for %s (%s) ...\n",
+		   	mr_name,
+		   	buf,
+		   	eid_name,
+		   	eid);
+	    }
+	      
 	    } else if (machinereadable && i == 0) {
 		printf("MAPRESOLVER=%s\nEID=%s\n", mr_name, eid_name);
 		
             }                  	
-        else if (!machinereadable)
+        else if (!machinereadable){
+	  if (encapsulate == 1) {
+		printf("Send encapsulated map-request to %s for %s ...\n", mr_name, eid_name);
+	  }
+	  else {
 		printf("Send map-request to %s for %s ...\n", mr_name, eid_name);
-	    
+	  }
+	}
 
 	if (send_map_request(s,
 			     nonce0,
@@ -661,7 +690,8 @@ int main(int argc, char *argv[])
 			     (struct sockaddr *)&eid_addr,
 			     iid,
 			     (struct sockaddr *)&map_resolver_addr,
-			     (struct sockaddr *)&my_addr)) {
+			     (struct sockaddr *)&my_addr,
+			     encapsulate)) {
 	    fprintf(stderr, "send_map_request: can't send map-request\n");
 	    exit(BAD);
 	}

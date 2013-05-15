@@ -19,10 +19,13 @@ lig \- LISP Internet Groper
 .SH SYNOPSIS
 .TP
 .B lig
-[-b] [-d] <EID> -m <map resolver/server> [-c <count>] [-p <port>] [-t <timeout>] [-i <IID>] [-v] [--mrauth] [--smri]
+[-b] [-d] <EID> -m <RLOC/Map Resolver/Server> --noencap [-c <count>] [-p <port>] [-t <timeout>] [-i <IID>] [-v] [--probe] [--smr] [--smri]
 .TP
 .B lig
--r -m <map resolver/server> --eidpref <EID> --eidmlen <Mask length> --pass <password> [--noproxy] [--mnot] [--recordttl <TTL>] [--notauth] [--mapvers <Map Version>] --locator <RLOC> [--locpr <Priority>] [--locw <Weight>] [--locmpr <MPriority>] [--locmw <MWeight>] [--notreach] --addloc [-v] 
+[-b] [-d] <EID> -m <RLOC/Map Resolver/Server> [-c <count>] [-p <port>] [-t <timeout>] [-i <IID>] [-v] [--mrauth] [--smri]
+.TP
+.B lig
+-r -m <RLOC/Map Resolver/Server> --eidpref <EID> --eidmlen <Mask length> --pass <password> [--noproxy] [--mnot] [--recordttl <TTL>] [--notauth] [--mapvers <Map Version>] --locator <RLOC> [--locpr <Priority>] [--locw <Weight>] [--locmpr <MPriority>] [--locmw <MWeight>] [--notreach] --addloc [-v] 
 
 .SH DESCRIPTION
 The LISP Internet Groper (lig) 
@@ -37,13 +40,17 @@ display additional debug information
 .TP
 \-r
 If specified, lig will send a Map Register message. If not, it 
-will send an Encapsulated Map Request.
+will send a Map Request/Encapsulated Map Request.
 .TP
-\-m <map resolver/server>
-Specify the Map Resolver/Server to send the Map 
-Request/Map Register to. The Map Resolver can also be 
-specified by setting the LISP_MAP_RESOLVER enviornment variable
-to the name (or address) of a Map Resolver.
+\-m <RLOC/Map Resolver/Server>
+Specify the destination RLOC, Map Resolver or Map Server to send the Map 
+Request, Encapsulated Map Request or Map Register respectively.
+The Map Resolver can also be specified by setting the LISP_MAP_RESOLVER 
+enviornment variable to the name (or address) of a Map Resolver.
+.TP
+\--noencap
+If specified, lig will send a Map Request. If not,  it will send
+an Encapsulated Map Request. 
 .TP
 \-c <count>
 Send <count> Map Requests before giving up. The default value is 3.
@@ -57,12 +64,19 @@ Set the time to wait for a Map Reply (in milliseconds).
 \-i <IID>
 Use the specified Instance ID.
 .TP
-\--mrauth
-Set the Map-Request Authoritatuve bit if you want the destination 
-site to return the Map-Reply rather than the mapping database system.
+\--probe
+Set the Probe bit to indicate that a Map-Request SHOULD be treated 
+as a Locator reachability probe.
+.TP
+\--smr
+Set the Solicit-Map-Request (SMR) bit. It is cleared by default.
 .TP
 \--smri
 Set the SMR-invoked bit. It is cleared by default.
+.TP
+\--mrauth
+Set the Map-Request Authoritatuve bit if you want the destination 
+site to return the Map-Reply rather than the mapping database system.
 .TP
 \--eidpref <EID>
 Specify the EID prefix address for the Map Register function.. This 

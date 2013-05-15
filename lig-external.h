@@ -46,6 +46,8 @@ extern	ushort		emr_inner_src_port;
 
 	u_char		mrauth;	
 	u_char		smri;
+	u_char		probe;
+	u_char		smr;
 
 #ifdef BSD
 #include <string.h>

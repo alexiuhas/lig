@@ -79,7 +79,7 @@
  *
  */
 
-int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_addr)
+int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_addr,encapsulate)
      int		s;
      unsigned int	nonce0;
      unsigned int	nonce1;
@@ -88,6 +88,7 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
      int32_t	        iid;
      struct sockaddr	*map_resolver_addr;
      struct sockaddr	*my_addr; 
+     int		encapsulate;
 {
 
     unsigned int		ip_len		   = 0;
@@ -100,10 +101,10 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
     char buf2[NI_MAXHOST];
 
     uchar			packet[MAX_IP_PACKET];	
-    struct lisp_control_pkt	*lcp;
-    struct ip			*iph;
-    struct ip6_hdr		*ip6h;
-    struct udphdr		*udph;
+    struct lisp_control_pkt	*lcp		      = NULL;
+    struct ip			*iph		      = NULL;
+    struct ip6_hdr		*ip6h		      = NULL;
+    struct udphdr		*udph		      = NULL;
     struct map_request_pkt	*map_request;
     struct map_request_eid	*map_request_eid;
     struct lcaf                 *map_request_lcaf     = NULL;
@@ -184,7 +185,7 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
      *   #define	CO(addr,len) (((char *) addr + len))
      *
      */
-
+  if (encapsulate == 1) {
     lcp			= (struct lisp_control_pkt *) packet;
 
     if (eid_addr->sa_family == AF_INET) {
@@ -196,9 +197,12 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
 	ip6h		= (struct ip6_hdr *)          CO(lcp,  sizeof(struct lisp_control_pkt));
 	udph		= (struct udphdr *)           CO(ip6h, sizeof(struct ip6_hdr));
     }
-
+  
     map_request         = (struct map_request_pkt *)  CO(udph, sizeof(struct udphdr));
-
+  }
+  else {
+    map_request 	= (struct map_request_pkt *) packet;
+  }
     if (my_addr->sa_family == AF_INET)
         map_request_eid  = (struct map_request_eid *)  CO(map_request, sizeof(struct map_request_pkt) + sizeof(struct in_addr));
     else
@@ -214,10 +218,16 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
      *  compute lengths of interest
      */
 
+  if (encapsulate == 1){  
     udp_len	= sizeof(struct udphdr) + sizeof(struct map_request_pkt)
                                         + sizeof(struct map_request_eid)
                                         + extra_len;
-
+  }
+  else {
+    udp_len 	= 			sizeof(struct map_request_pkt)
+                                        + sizeof(struct map_request_eid)
+                                        + extra_len;
+  }
     if (my_addr->sa_family == AF_INET)
         udp_len = udp_len               + sizeof(struct in_addr);
     else
@@ -231,8 +241,14 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
 	ip_len	= udp_len		+ sizeof(struct ip6_hdr);
     }
 
+  if (encapsulate == 1){  
     packet_len  = ip_len                + sizeof(struct lisp_control_pkt);
-
+  }
+  else {
+    packet_len = udp_len;
+  }
+  
+  if (encapsulate == 1) {
     /*
      *	Tell the Map Resolver its an LISP Encapsulated control packet 
      */
@@ -285,6 +301,7 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
     udph->len    = htons(udp_len);
     udph->check  = 0;
 #endif
+  }
 
     /* 
      *	Build the Map-Request
@@ -324,8 +341,8 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
 
     map_request->smr_invoked		     = smri;
     map_request->proxy_itr		     = 0;
-    map_request->smr_bit                     = 0;
-    map_request->rloc_probe                  = 0;
+    map_request->smr_bit                     = smr;
+    map_request->rloc_probe                  = probe;
     map_request->map_data_present            = 0;
     map_request->auth_bit                    = mrauth;
     map_request->lisp_type                   = LISP_MAP_REQUEST;
@@ -365,7 +382,9 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
             memcpy(&map_request_eid->eid_prefix,
                     &(((struct sockaddr_in *)eid_addr)->sin_addr), sizeof(struct in_addr));
         }
-        iph->ip_sum			     = ip_checksum(iph, iph->ip_hl);
+	if (encapsulate == 1) {
+	  iph->ip_sum			     = ip_checksum(iph, iph->ip_hl);
+	}
     } else {
         map_request_eid->eid_mask_len	     = LISP_IPV6_MASK_LEN;
         if (iid >= 0) {
@@ -388,6 +407,7 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
         }
     }
 
+  if (encapsulate == 1){  
     if (udp_checksum_disabled)
 	udpsum(udph) = 0;
     else {
@@ -396,6 +416,7 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
 	else
 	    udpsum(udph) = udp6_checksum(ip6h,udph,udp_len);
     }
+  }
 
     /*
      *	Set up to talk to the map-resolver
@@ -417,6 +438,7 @@ int send_map_request(s,nonce0,nonce1,before,eid_addr,iid,map_resolver_addr,my_ad
 	perror("gettimeofday");
 	return(BAD);
     }
+
 
     if ((nbytes = sendto(s,
 			 (const void *) packet,
