@@ -90,6 +90,7 @@ unsigned int machinereadable		= 0;
 unsigned int mreg			= 0;			// used to specify it is a map-register message
 int32_t      iid			= -1;
 int 	     encapsulate		= 1;
+int	     check			= 0;
 
 /*
  * Set the locator paramaters priority, weight, mpriority, mweight 
@@ -270,6 +271,7 @@ int main(int argc, char *argv[])
 		exit(BAD);
 	    }
 	    get_lisp_addr_from_char(loc, locator_addr);				// get the locator address
+	    check = 1;
 	    break;
 	  case '8':
 	    priority = atoi(optarg);
@@ -290,6 +292,7 @@ int main(int argc, char *argv[])
 	    pass = strdup(optarg);
 	    break;
 	  case 'a':
+	   if (check == 1){
 	    locator = new_local_locator(locator_addr, reach, priority, weight, mpriority, mweight, 0);			//generate the locator element
 	    if(locator == NULL) {
 	      lispd_log_msg(LISP_LOG_ERR, "locator");
@@ -301,6 +304,11 @@ int main(int argc, char *argv[])
 	      exit(BAD);
 	    }
 	    set_locator_defaults(&priority, &weight, &mpriority, &mweight, &reach);					//reset the locator parameters for the next entry
+	    check = 0;
+	   }
+	   else{
+	    printf("WARNING: The --locator option must be specified before each new --addloc option\n"); 
+	   }
 	    break;
 	case 'b':
 	    machinereadable += 1;
