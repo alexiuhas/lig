@@ -19,7 +19,7 @@ lig \- LISP Internet Groper
 .SH SYNOPSIS
 .TP
 .B lig
-[-b] [-d] <EID> -m <RLOC/Map Resolver/Server> --noencap [-c <count>] [-p <port>] [-t <timeout>] [-i <IID>] [-v] [--probe] [--smr] [--smri]
+[-b] [-d] <EID> -m <RLOC/Map Resolver/Server> --noencap [-c <count>] [-t <timeout>] [-i <IID>] [-v] [--probe] [--smr] [--smri]
 .TP
 .B lig
 [-b] [-d] <EID> -m <RLOC/Map Resolver/Server> [-c <count>] [-p <port>] [-t <timeout>] [-i <IID>] [-v] [--mrauth] [--smri]
@@ -75,7 +75,7 @@ Set the Solicit-Map-Request (SMR) bit. It is cleared by default.
 Set the SMR-invoked bit. It is cleared by default.
 .TP
 \--mrauth
-Set the Map-Request Authoritatuve bit if you want the destination 
+Set the Map-Request Authoritative bit if you want the destination 
 site to return the Map-Reply rather than the mapping database system.
 .TP
 \--eidpref <EID>
