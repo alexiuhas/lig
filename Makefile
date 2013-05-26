@@ -35,13 +35,19 @@
 #	$Header: /mnt/disk1/dmm/src/lig/RCS/Makefile,v 1.1 2010/11/14 20:49:29 dmm Exp $
 #
 
+ #
+ #
+ #	Modified by: Alexandru Iuhas
+ # 
+ #
+
 SRC      = lig.c send_map_request.c lib.c cksum.c print.c get_my_ip_addr.c \
-	   testing/lispd_config.c testing/lispd_lib.c testing/lispd_locator.c testing/lispd_log.c \
-	   testing/lispd_mapping.c testing/lispd_map_register.c testing/lispd_pkt_lib.c \
-	   testing/lispd_sockets.c testing/lispd_iface_list.c
-INC	 = lig.h lig-external.h testing/lispd_external.h testing/lispd.h testing/lispd_lib.h testing/lispd_log.h  \
-	   testing/lispd_locator.h testing/lispd_map_register.h  testing/lispd_mapping.h  \
-	   testing/lispd_pkt_lib.h testing/lispd_sockets.h testing/lispd_iface_list.h
+	   lispmob/lispd_config.c lispmob/lispd_lib.c lispmob/lispd_locator.c lispmob/lispd_log.c \
+	   lispmob/lispd_mapping.c lispmob/lispd_map_register.c lispmob/lispd_pkt_lib.c \
+	   lispmob/lispd_sockets.c lispmob/lispd_iface_list.c
+INC	 = lig.h lig-external.h lispmob/lispd_external.h lispmob/lispd.h lispmob/lispd_lib.h lispmob/lispd_log.h  \
+	   lispmob/lispd_locator.h lispmob/lispd_map_register.h  lispmob/lispd_mapping.h  \
+	   lispmob/lispd_pkt_lib.h lispmob/lispd_sockets.h lispmob/lispd_iface_list.h
 OBJ	 = $(SRC:%.c=%.o)
 EXE      = lig
 #
@@ -72,5 +78,5 @@ ${MAN}: ${MANSRC}
 	groff -t -e -mandoc -Tascii ${MANSRC} | col -bx > ${MANOUT}
 
 clean:
-	/bin/rm -f *.o testing/*.o ${EXE} ${MANOUT} core a.out Make.log Make.err *~ testing/*~
+	/bin/rm -f *.o lispmob/*.o ${EXE} ${MANOUT} core a.out Make.log Make.err *~ lispmob/*~
 

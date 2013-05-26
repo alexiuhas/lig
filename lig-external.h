@@ -38,6 +38,12 @@
  *
  */
 
+/*
+ *
+ *	Modified by: Alexandru Iuhas
+ * 
+ */
+
 extern  unsigned int	debug;
 extern	unsigned int	machinereadable;
 extern  unsigned int	disallow_eid;

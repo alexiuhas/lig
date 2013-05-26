@@ -13,16 +13,16 @@
 .\"
 
 
-.TH lig 1  "April 28, 2013" "Version 2.0" "USER COMMANDS"
+.TH lig 1  "May 26, 2013" "Version 2.0" "USER COMMANDS"
 .SH NAME
 lig \- LISP Internet Groper
 .SH SYNOPSIS
 .TP
 .B lig
-[-b] [-d] <EID> -m <RLOC/Map Resolver/Server> --noencap [-c <count>] [-t <timeout>] [-i <IID>] [-v] [--probe] [--smr] [--smri]
+[-b] [-d] <EID> -m <RLOC/Map Resolver/Server> --noencap [-c <count>] [-s <source>] [-t <timeout>] [-i <IID>] [-v] [--probe] [--smr] [--smri]
 .TP
 .B lig
-[-b] [-d] <EID> -m <RLOC/Map Resolver/Server> [-c <count>] [-p <port>] [-t <timeout>] [-i <IID>] [-v] [--mrauth] [--smri]
+[-b] [-d] <EID> -m <RLOC/Map Resolver/Server> [-c <count>] [-s <source>] [-p <port>] [-t <timeout>] [-i <IID>] [-v] [--mrauth] [--smri]
 .TP
 .B lig
 -r -m <RLOC/Map Resolver/Server> --eidpref <EID> --eidmlen <Mask length> --pass <password> [--noproxy] [--mnot] [--recordttl <TTL>] [--notauth] [--mapvers <Map Version>] --locator <RLOC> [--locpr <Priority>] [--locw <Weight>] [--locmpr <MPriority>] [--locmw <MWeight>] [--notreach] --addloc [-v] 
@@ -54,6 +54,10 @@ an Encapsulated Map Request.
 .TP
 \-c <count>
 Send <count> Map Requests before giving up. The default value is 3.
+.TP
+\-s <source>
+Specify the originating ITR-RLOC for the Map-Request/Encapsulated
+Map-Request message. If not specified it will be obtained automatically.
 .TP
 \-p <port>
 Set the source port of the inner (encapsulated) UDP header.

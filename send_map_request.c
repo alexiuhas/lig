@@ -44,6 +44,12 @@
  *
  */
 
+/*
+ *
+ *	Modified by: Alexandru Iuhas
+ * 
+ */
+
 #include	"lig.h"
 #include	"lig-external.h"
 

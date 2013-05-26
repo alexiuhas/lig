@@ -47,19 +47,27 @@
  *
  */
 
+/*
+ *
+ *	Modified by: Alexandru Iuhas
+ * 
+ * 	Added Map-Register and simple Map-Request Functionality
+ */
+
+
 #include	"lig.h"
 #include	"lig-external.h"
 
-#include 	"testing/lispd_iface_list.h"
-#include 	"testing/lispd_external.h"
-#include 	"testing/lispd_lib.h"
-#include 	"testing/lispd_locator.h"
-#include 	"testing/lispd_map_register.h"
-#include 	"testing/lispd_pkt_lib.h"
-#include 	"testing/lispd_sockets.h"
-#include 	"testing/lispd_log.h"
-#include 	"testing/lispd_mapping.h"
-#include 	"testing/lispd_config.h"
+#include 	"lispmob/lispd_iface_list.h"
+#include 	"lispmob/lispd_external.h"
+#include 	"lispmob/lispd_lib.h"
+#include 	"lispmob/lispd_locator.h"
+#include 	"lispmob/lispd_map_register.h"
+#include 	"lispmob/lispd_pkt_lib.h"
+#include 	"lispmob/lispd_sockets.h"
+#include 	"lispmob/lispd_log.h"
+#include 	"lispmob/lispd_mapping.h"
+#include 	"lispmob/lispd_config.h"
 /*
  *	globals
  */
