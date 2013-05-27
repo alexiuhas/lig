@@ -15,6 +15,9 @@
  *
  *	Instance ID support added by Lorand Jakab <lj@icanhas.net>
  *	Thu Jul 26 00:50:51 PDT 2012
+ * 
+ * 	Non-encapsulated Map-Request Functionality added by Alexandru Iuhas <iuhas@ac.upc.edu>
+ * 	Mon May 27 17:00:20 2013,  Polytechnic University of Catalonia
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -44,11 +47,6 @@
  *
  */
 
-/*
- *
- *	Modified by: Alexandru Iuhas
- * 
- */
 
 #include	"lig.h"
 #include	"lig-external.h"

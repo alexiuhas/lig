@@ -28,7 +28,7 @@
  *    David Meyer       <dmm@cisco.com>
  *    Preethi Natarajan <prenatar@cisco.com>
  *    Lorand Jakab      <ljakab@ac.upc.edu>
- *
+ *    Alexandru Iuhas   <iuhas@ac.upc.edu>
  */
 
 #include <sys/timerfd.h>

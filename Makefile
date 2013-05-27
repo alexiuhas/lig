@@ -8,6 +8,9 @@
 #	dmm@1-4-5.net
 #	Wed Apr  8 13:36:24 2009
 #
+# 	Map-Register and Non-encapsulated Map-Request Functionality added by Alexandru Iuhas <iuhas@ac.upc.edu>
+# 	Mon May 27 17:00:20 2013,  Polytechnic University of Catalonia
+#
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -35,11 +38,6 @@
 #	$Header: /mnt/disk1/dmm/src/lig/RCS/Makefile,v 1.1 2010/11/14 20:49:29 dmm Exp $
 #
 
- #
- #
- #	Modified by: Alexandru Iuhas
- # 
- #
 
 SRC      = lig.c send_map_request.c lib.c cksum.c print.c get_my_ip_addr.c \
 	   lispmob/lispd_config.c lispmob/lispd_lib.c lispmob/lispd_locator.c lispmob/lispd_log.c \
